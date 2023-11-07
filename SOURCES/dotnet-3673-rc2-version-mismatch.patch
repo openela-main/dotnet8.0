@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Matt Thalman <mthalman@microsoft.com>
+Date: Tue, 24 Oct 2023 16:20:26 -0500
+Subject: [PATCH] Use correct runtime package version
+
+---
+ prereqs/git-info/AllRepoVersions.props | 2 +-
+ prereqs/git-info/runtime.props         | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/prereqs/git-info/AllRepoVersions.props b/prereqs/git-info/AllRepoVersions.props
+index 79a789e1cd..a3f3ccf094 100644
+--- a/prereqs/git-info/AllRepoVersions.props
++++ b/prereqs/git-info/AllRepoVersions.props
+@@ -32,7 +32,7 @@
+     <roslynGitCommitHash>bdd9c5ba66b00beebdc3516acc5e29b83efd89af</roslynGitCommitHash>
+     <roslynOutputPackageVersion>4.8.0-3.23471.11</roslynOutputPackageVersion>
+     <runtimeGitCommitHash>0b25e38ad32a69cd83ae246104b32449203cc71c</runtimeGitCommitHash>
+-    <runtimeOutputPackageVersion>8.0.0-rc.2.23475.17</runtimeOutputPackageVersion>
++    <runtimeOutputPackageVersion>8.0.0-rc.2.23479.6</runtimeOutputPackageVersion>
+     <sdkGitCommitHash>67e671f384bee6937630b52b02cc78e69b27e280</sdkGitCommitHash>
+     <sdkOutputPackageVersion>8.0.100-rc.2.23480.5</sdkOutputPackageVersion>
+     <sourcebuildexternalsGitCommitHash>6dbf3aaa0fc9664df86462f5c70b99800934fccd</sourcebuildexternalsGitCommitHash>
+diff --git a/prereqs/git-info/runtime.props b/prereqs/git-info/runtime.props
+index 546469c3a0..20c2bf8840 100644
+--- a/prereqs/git-info/runtime.props
++++ b/prereqs/git-info/runtime.props
+@@ -2,8 +2,8 @@
+ <Project>
+   <PropertyGroup>
+     <GitCommitHash>0b25e38ad32a69cd83ae246104b32449203cc71c</GitCommitHash>
+-    <OfficialBuildId>20230925.17</OfficialBuildId>
+-    <OutputPackageVersion>8.0.0-rc.2.23475.17</OutputPackageVersion>
++    <OfficialBuildId>20230929.6</OfficialBuildId>
++    <OutputPackageVersion>8.0.0-rc.2.23479.6</OutputPackageVersion>
+     <PreReleaseVersionLabel>rc.2</PreReleaseVersionLabel>
+     <IsStable>false</IsStable>
+   </PropertyGroup>
