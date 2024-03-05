@@ -1,0 +1,20 @@
+Allow builders to override failing on pdb mismatch
+--- a/build.proj
++++ b/build.proj
+@@ -114,6 +114,7 @@
+       <SdkSymbolsTarball>$(OutputPath)dotnet-symbols-sdk-$(MicrosoftSourceBuildIntermediateInstallerVersion)-$(TargetRid).tar.gz</SdkSymbolsTarball>
+       <SdkLayout>$(ArtifactsTmpDir)Sdk</SdkLayout>
+       <SdkTarball>%(SdkTarballItem.Identity)</SdkTarball>
++      <FailOnMissingPDBs Condition="'$(FailOnMissingPDBs)' == ''">true</FailOnMissingPDBs>
+     </PropertyGroup>
+ 
+     <MakeDir Directories="$(SdkLayout)" />
+@@ -123,7 +124,7 @@
+     <CreateSdkSymbolsLayout SdkLayoutPath="$(SdkLayout)"
+                             AllSymbolsPath="$(UnifiedSymbolsLayout)"
+                             SdkSymbolsLayoutPath="$(SdkSymbolsLayout)"
+-                            FailOnMissingPDBs="true" />
++                            FailOnMissingPDBs="$(FailOnMissingPDBs)" />
+ 
+     <Exec Command="tar --numeric-owner -czf $(SdkSymbolsTarball) *"
+           WorkingDirectory="$(SdkSymbolsLayout)" />
