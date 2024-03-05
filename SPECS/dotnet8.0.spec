@@ -8,22 +8,22 @@
 
 %global dotnetver 8.0
 
-%global host_version 8.0.0-rc.2.23479.6
-%global runtime_version 8.0.0-rc.2.23479.6
-%global aspnetcore_runtime_version 8.0.0-rc.2.23480.2
-%global sdk_version 8.0.100-rc.2.23502.1
+%global host_version 8.0.2
+%global runtime_version 8.0.2
+%global aspnetcore_runtime_version %{runtime_version}
+%global sdk_version 8.0.102
 %global sdk_feature_band_version %(echo %{sdk_version} | cut -d '-' -f 1 | sed -e 's|[[:digit:]][[:digit:]]$|00|')
-%global templates_version 8.0.0-rc.2.23480.2
+%global templates_version %{runtime_version}
 #%%global templates_version %%(echo %%{runtime_version} | awk 'BEGIN { FS="."; OFS="." } {print $1, $2, $3+1 }')
 
 # upstream can produce releases with a different tag than the SDK version
-%global upstream_tag v8.0.0-rc.2.23479.6
+%global upstream_tag v%{runtime_version}
 %global upstream_tag_without_v %(echo %{upstream_tag} | sed -e 's|^v||')
 
-%global host_rpm_version 8.0.0~rc.2
-%global runtime_rpm_version 8.0.0~rc.2
-%global aspnetcore_runtime_rpm_version 8.0.0~rc.2
-%global sdk_rpm_version 8.0.100~rc.2
+%global host_rpm_version %{host_version}
+%global runtime_rpm_version %{runtime_version}
+%global aspnetcore_runtime_rpm_version %{aspnetcore_runtime_version}
+%global sdk_rpm_version %{sdk_version}
 
 %if 0%{?fedora} || 0%{?rhel} < 8
 %global use_bundled_libunwind 0
@@ -54,7 +54,7 @@
 
 Name:           dotnet%{dotnetver}
 Version:        %{sdk_rpm_version}
-Release:        0.1%{?dist}
+Release:        2%{?dist}
 Summary:        .NET Runtime and SDK
 License:        0BSD AND Apache-2.0 AND (Apache-2.0 WITH LLVM-exception) AND APSL-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-4-Clause AND BSL-1.0 AND bzip2-1.0.6 AND CC0-1.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC-PDDC AND CNRI-Python AND EPL-1.0 AND GPL-2.0-only AND (GPL-2.0-only WITH GCC-exception-2.0) AND GPL-2.0-or-later AND GPL-3.0-only AND ICU AND ISC AND LGPL-2.1-only AND LGPL-2.1-or-later AND LicenseRef-Fedora-Public-Domain AND LicenseRef-ISO-8879 AND MIT AND MIT-Wu AND MS-PL AND MS-RL AND NCSA AND OFL-1.1 AND OpenSSL AND Unicode-DFS-2015 AND Unicode-DFS-2016 AND W3C-19980720 AND X11 AND Zlib
 
@@ -90,19 +90,13 @@ Source21:       dotnet.sh.in
 Patch1:         roslyn-analyzers-ppc64le-apphost.patch
 # https://github.com/dotnet/source-build/discussions/3481
 Patch2:         vstest-intent-net8.0.patch
-# https://github.com/dotnet/runtime/pull/92274
-Patch3:         runtime-92274-webcil-s390x.patch
-# https://github.com/dotnet/runtime/pull/92920
-Patch4:         runtime-92920-multiple-ssl-dirs.patch
-# https://github.com/dotnet/source-build/issues/3673
-Patch5:         dotnet-3673-rc2-version-mismatch.patch
+# https://github.com/dotnet/runtime/pull/95216#issuecomment-1842799314
+Patch3:         runtime-re-enable-implicit-rejection.patch
+# https://github.com/dotnet/msbuild/pull/9449
+Patch4:         msbuild-9449-exec-stop-setting-a-locale.patch
 
 
-%if 0%{?fedora} || 0%{?rhel} >= 8
 ExclusiveArch:  aarch64 ppc64le s390x x86_64
-%else
-ExclusiveArch:  x86_64
-%endif
 
 
 BuildRequires:  clang
@@ -270,6 +264,18 @@ It particularly focuses on creating console applications, web
 applications and micro-services.
 
 
+%package -n dotnet-runtime-dbg-%{dotnetver}
+
+Version:        %{runtime_rpm_version}
+Summary:        Managed debug symbols NET %{dotnetver} runtime
+
+Requires:       dotnet-runtime-%{dotnetver}%{?_isa} = %{runtime_rpm_version}-%{release}
+
+%description -n dotnet-runtime-dbg-%{dotnetver}
+This package contains the managed symbol (pdb) files useful to debug the
+managed parts of the .NET runtime itself.
+
+
 %package -n aspnetcore-runtime-%{dotnetver}
 
 Version:        %{aspnetcore_runtime_rpm_version}
@@ -287,6 +293,18 @@ cross platform web applications that work on Linux, Mac and Windows.
 
 It particularly focuses on creating console applications, web
 applications and micro-services.
+
+
+%package -n aspnetcore-runtime-dbg-%{dotnetver}
+
+Version:        %{aspnetcore_runtime_rpm_version}
+Summary:        Managed debug symbols for the ASP.NET Core %{dotnetver} runtime
+
+Requires:       aspnetcore-runtime-%{dotnetver}%{?_isa} = %{aspnetcore_runtime_rpm_version}-%{release}
+
+%description -n aspnetcore-runtime-dbg-%{dotnetver}
+This package contains the managed symbol (pdb) files useful to debug the
+managed parts of the ASP.NET Core runtime itself.
 
 
 %package -n dotnet-templates-%{dotnetver}
@@ -336,6 +354,18 @@ It particularly focuses on creating console applications, web
 applications and micro-services.
 
 
+%package -n dotnet-sdk-dbg-%{dotnetver}
+
+Version:        %{sdk_rpm_version}
+Summary:        Managed debug symbols for the .NET %{dotnetver} Software Development Kit
+
+Requires:       dotnet-sdk-%{dotnetver}%{?_isa} = %{sdk_rpm_version}-%{release}
+
+%description -n dotnet-sdk-dbg-%{dotnetver}
+This package contains the managed symbol (pdb) files useful to debug the .NET
+Software Development Kit (SDK) itself.
+
+
 %global dotnet_targeting_pack() %{expand:
 %package -n %{1}
 
@@ -374,13 +404,13 @@ These are not meant for general use.
 
 %prep
 release_json_tag=$(grep tag %{SOURCE5} | cut -d: -f2 | sed -E 's/[," ]*//g')
-if [[ ${release_json_tag} != %{upstream_tag} ]]; then
+if [[ ${release_json_tag} != %{upstream_tag_without_v} ]]; then
    echo "error: tag in release.json doesn't match tag in spec file"
    exit 1
 fi
 
 %if %{without bootstrap}
-%setup -q -n dotnet-%{upstream_tag_without_v}
+%setup -q -c -n dotnet-%{upstream_tag_without_v}
 
 # Remove all prebuilts
 find -iname '*.dll' -type f -delete
@@ -441,9 +471,6 @@ popd
 # tar -x --strip-components=1 -f %%{SOURCE11}
 
 %autopatch -p1 -M 999
-
-# Fix bad hardcoded path in build
-sed -i 's|/usr/share/dotnet|%{_libdir}/dotnet|' src/runtime/src/native/corehost/hostmisc/pal.unix.cpp
 
 %if ! %{use_bundled_libunwind}
 sed -i -E 's|( /p:BuildDebPackage=false)|\1 --cmakeargs -DCLR_CMAKE_USE_SYSTEM_LIBUNWIND=TRUE|' src/runtime/eng/SourceBuild.props
@@ -542,8 +569,9 @@ if [[ $(find %{buildroot}%{_libdir}/dotnet -name '*.pem' -print | wc -l) != 1 ]]
 fi
 
 # Install managed symbols
-tar xf artifacts/%{runtime_arch}/Release/dotnet-runtime-symbols-%{runtime_id}-%{runtime_version}.tar.gz \
-   -C %{buildroot}%{_libdir}/dotnet/shared/Microsoft.NETCore.App/%{runtime_version}/
+tar xf artifacts/%{runtime_arch}/Release/dotnet-symbols-sdk-%{sdk_version}*-%{runtime_id}.tar.gz \
+   -C %{buildroot}%{_libdir}/dotnet/
+find %{buildroot}%{_libdir}/dotnet/packs -iname '*.pdb' -delete
 
 # Fix executable permissions on files
 find %{buildroot}%{_libdir}/dotnet/ -type f -name 'apphost' -exec chmod +x {} \;
@@ -599,6 +627,14 @@ echo "Testing build results for debug symbols..."
 %{SOURCE20} -v %{buildroot}%{_libdir}/dotnet/
 
 
+find %{buildroot}%{_libdir}/dotnet/shared/Microsoft.NETCore.App -type f -and -not -name '*.pdb' | sed -E 's|%{buildroot}||' > dotnet-runtime-non-dbg-files
+find %{buildroot}%{_libdir}/dotnet/shared/Microsoft.NETCore.App -type f -name '*.pdb'  | sed -E 's|%{buildroot}||' > dotnet-runtime-dbg-files
+find %{buildroot}%{_libdir}/dotnet/shared/Microsoft.AspNetCore.App -type f -and -not -name '*.pdb'  | sed -E 's|%{buildroot}||' > aspnetcore-runtime-non-dbg-files
+find %{buildroot}%{_libdir}/dotnet/shared/Microsoft.AspNetCore.App -type f -name '*.pdb' | sed -E 's|%{buildroot}||' > aspnetcore-runtime-dbg-files
+find %{buildroot}%{_libdir}/dotnet/sdk -type d | tail -n +2 | sed -E 's|%{buildroot}||' | sed -E 's|^|%dir |' > dotnet-sdk-non-dbg-files
+find %{buildroot}%{_libdir}/dotnet/sdk -type f -and -not -name '*.pdb' | sed -E 's|%{buildroot}||' >> dotnet-sdk-non-dbg-files
+find %{buildroot}%{_libdir}/dotnet/sdk -type f -name '*.pdb'  | sed -E 's|%{buildroot}||' > dotnet-sdk-dbg-files
+
 
 %check
 %if 0%{?fedora} > 35
@@ -635,23 +671,26 @@ export COMPlus_LTTng=0
 %dir %{_libdir}/dotnet/host/fxr
 %{_libdir}/dotnet/host/fxr/%{host_version}
 
-%files -n dotnet-runtime-%{dotnetver}
+%files -n dotnet-runtime-%{dotnetver} -f dotnet-runtime-non-dbg-files
 %dir %{_libdir}/dotnet/shared
 %dir %{_libdir}/dotnet/shared/Microsoft.NETCore.App
-%{_libdir}/dotnet/shared/Microsoft.NETCore.App/%{runtime_version}
+%dir %{_libdir}/dotnet/shared/Microsoft.NETCore.App/%{runtime_version}
 
-%files -n aspnetcore-runtime-%{dotnetver}
+%files -n dotnet-runtime-dbg-%{dotnetver} -f dotnet-runtime-dbg-files
+
+%files -n aspnetcore-runtime-%{dotnetver} -f aspnetcore-runtime-non-dbg-files
 %dir %{_libdir}/dotnet/shared
 %dir %{_libdir}/dotnet/shared/Microsoft.AspNetCore.App
-%{_libdir}/dotnet/shared/Microsoft.AspNetCore.App/%{aspnetcore_runtime_version}
+%dir %{_libdir}/dotnet/shared/Microsoft.AspNetCore.App/%{aspnetcore_runtime_version}
+
+%files -n aspnetcore-runtime-dbg-%{dotnetver} -f aspnetcore-runtime-dbg-files
 
 %files -n dotnet-templates-%{dotnetver}
 %dir %{_libdir}/dotnet/templates
 %{_libdir}/dotnet/templates/%{templates_version}
 
-%files -n dotnet-sdk-%{dotnetver}
+%files -n dotnet-sdk-%{dotnetver} -f dotnet-sdk-non-dbg-files
 %dir %{_libdir}/dotnet/sdk
-%{_libdir}/dotnet/sdk/%{sdk_version}
 %dir %{_libdir}/dotnet/sdk-manifests
 %{_libdir}/dotnet/sdk-manifests/%{sdk_feature_band_version}*
 %{_libdir}/dotnet/metadata
@@ -659,12 +698,38 @@ export COMPlus_LTTng=0
 %{_libdir}/dotnet/packs/Microsoft.AspNetCore.App.Runtime.%{runtime_id}/%{aspnetcore_runtime_version}
 %{_libdir}/dotnet/packs/Microsoft.NETCore.App.Runtime.%{runtime_id}/%{runtime_version}
 
+%files -n dotnet-sdk-dbg-%{dotnetver} -f dotnet-sdk-dbg-files
+
 %files -n dotnet-sdk-%{dotnetver}-source-built-artifacts
 %dir %{_libdir}/dotnet
 %{_libdir}/dotnet/source-built-artifacts
 
 
 %changelog
+* Sat Feb 03 2024 Omair Majid <omajid@redhat.com> - 8.0.102-2
+- Don't set a locale when running msbuild Exec on Unix
+- Resolves: RHEL-23938
+
+* Thu Feb 01 2024 Omair Majid <omajid@redhat.com> - 8.0.102-1
+- Update to .NET SDK 8.0.102 and Runtime 8.0.2
+- Resolves: RHEL-23805
+
+* Tue Jan 30 2024 Omair Majid <omajid@redhat.com> - 8.0.101-2
+- Add -dbg subpackages for symbol files
+- Resolves: RHEL-23072
+
+* Wed Dec 20 2023 Omair Majid <omajid@redhat.com> - 8.0.101-1
+- Update to .NET SDK 8.0.101 and Runtime 8.0.1
+- Resolves: RHEL-19809
+
+* Wed Nov 08 2023 Omair Majid <omajid@redhat.com> - 8.0.100-2
+- Install more symbols
+- Related: RHEL-15861
+
+* Mon Nov 06 2023 Omair Majid <omajid@redhat.com> - 8.0.100-1
+- Update to .NET 8.0
+- Resolves: RHEL-15861
+
 * Mon Oct 16 2023 Omair Majid <omajid@redhat.com> - 8.0.100~rc.2-0.1
 - Update to .NET 8 RC 2
 - Resolves: RHEL-13790

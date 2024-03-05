@@ -1,9 +1,9 @@
 {
-  "release": "8.0.0-rc.2",
+  "release": "8.0.2",
   "channel": "8.0",
-  "tag": "v8.0.0-rc.2.23479.6",
-  "sdkVersion": "8.0.100-rc.2.23502.2",
-  "runtimeVersion": "8.0.0-rc.2.23479.6",
+  "tag": "8.0.2",
+  "sdkVersion": "8.0.102",
+  "runtimeVersion": "8.0.2",
   "sourceRepository": "https://github.com/dotnet/dotnet",
-  "sourceVersion": "1e872358329855089d8d14cec1f06d5b075824b5"
+  "sourceVersion": "d396b0c4d3e51c2d8d679b2f7233912bc5bfc2fa"
 }
