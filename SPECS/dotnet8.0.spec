@@ -8,10 +8,10 @@
 
 %global dotnetver 8.0
 
-%global host_version 8.0.2
-%global runtime_version 8.0.2
+%global host_version 8.0.3
+%global runtime_version 8.0.3
 %global aspnetcore_runtime_version %{runtime_version}
-%global sdk_version 8.0.102
+%global sdk_version 8.0.103
 %global sdk_feature_band_version %(echo %{sdk_version} | cut -d '-' -f 1 | sed -e 's|[[:digit:]][[:digit:]]$|00|')
 %global templates_version %{runtime_version}
 #%%global templates_version %%(echo %%{runtime_version} | awk 'BEGIN { FS="."; OFS="." } {print $1, $2, $3+1 }')
@@ -54,7 +54,7 @@
 
 Name:           dotnet%{dotnetver}
 Version:        %{sdk_rpm_version}
-Release:        2%{?dist}
+Release:        1%{?dist}
 Summary:        .NET Runtime and SDK
 License:        0BSD AND Apache-2.0 AND (Apache-2.0 WITH LLVM-exception) AND APSL-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-4-Clause AND BSL-1.0 AND bzip2-1.0.6 AND CC0-1.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC-PDDC AND CNRI-Python AND EPL-1.0 AND GPL-2.0-only AND (GPL-2.0-only WITH GCC-exception-2.0) AND GPL-2.0-or-later AND GPL-3.0-only AND ICU AND ISC AND LGPL-2.1-only AND LGPL-2.1-or-later AND LicenseRef-Fedora-Public-Domain AND LicenseRef-ISO-8879 AND MIT AND MIT-Wu AND MS-PL AND MS-RL AND NCSA AND OFL-1.1 AND OpenSSL AND Unicode-DFS-2015 AND Unicode-DFS-2016 AND W3C-19980720 AND X11 AND Zlib
 
@@ -76,7 +76,9 @@ Source3:        dotnet-prebuilts-%{bootstrap_sdk_version}-s390x.tar.gz
 # For non-releases, the source is generated on a Fedora box via:
 # ./build-dotnet-tarball %%{upstream_tag} or commit
 %global tarball_name dotnet-sdk-source-%{upstream_tag}
-Source0:        https://github.com/dotnet/dotnet/archive/refs/tags/%{upstream_tag}.tar.gz#/dotnet-%{upstream_tag}.tar.gz
+Source0:        https://github.com/dotnet/dotnet/archive/refs/tags/%{upstream_tag}.tar.gz#/dotnet-%{upstream_tag_without_v}.tar.gz
+Source1:        https://github.com/dotnet/dotnet/archive/refs/tags/%{upstream_tag}.tar.gz.sig#/dotnet-%{upstream_tag_without_v}.tar.gz.sig
+Source2:        https://dotnet.microsoft.com/download/dotnet/release-key-2023.asc
 %endif
 Source5:        https://github.com/dotnet/dotnet/releases/download/%{upstream_tag}/release.json
 
@@ -113,6 +115,7 @@ BuildRequires:  git
 %if 0%{?fedora} || 0%{?rhel} > 7
 BuildRequires:  glibc-langpack-en
 %endif
+BuildRequires:  gnupg2
 BuildRequires:  hostname
 BuildRequires:  krb5-devel
 BuildRequires:  libicu-devel
@@ -405,8 +408,10 @@ These are not meant for general use.
 
 
 %prep
+%{gpgverify} --keyring='%{SOURCE2}' --signature='%{SOURCE1}' --data='%{SOURCE0}'
+
 release_json_tag=$(grep tag %{SOURCE5} | cut -d: -f2 | sed -E 's/[," ]*//g')
-if [[ ${release_json_tag} != %{upstream_tag_without_v} ]]; then
+if [[ ${release_json_tag} != %{upstream_tag} ]]; then
    echo "error: tag in release.json doesn't match tag in spec file"
    exit 1
 fi
@@ -711,6 +716,10 @@ export COMPlus_LTTng=0
 
 
 %changelog
+* Thu Feb 29 2024 Omair Majid <omajid@redhat.com> - 8.0.103-1
+- Update to .NET SDK 8.0.103 and Runtime 8.0.3
+- Resolves: RHEL-27550
+
 * Sat Feb 03 2024 Omair Majid <omajid@redhat.com> - 8.0.102-2
 - Don't set a locale when running msbuild Exec on Unix
 - Resolves: RHEL-23939
