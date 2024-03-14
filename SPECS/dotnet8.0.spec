@@ -8,10 +8,10 @@
 
 %global dotnetver 8.0
 
-%global host_version 8.0.2
-%global runtime_version 8.0.2
+%global host_version 8.0.3
+%global runtime_version 8.0.3
 %global aspnetcore_runtime_version %{runtime_version}
-%global sdk_version 8.0.102
+%global sdk_version 8.0.103
 %global sdk_feature_band_version %(echo %{sdk_version} | cut -d '-' -f 1 | sed -e 's|[[:digit:]][[:digit:]]$|00|')
 %global templates_version %{runtime_version}
 #%%global templates_version %%(echo %%{runtime_version} | awk 'BEGIN { FS="."; OFS="." } {print $1, $2, $3+1 }')
@@ -76,7 +76,9 @@ Source3:        dotnet-prebuilts-%{bootstrap_sdk_version}-s390x.tar.gz
 # For non-releases, the source is generated on a Fedora box via:
 # ./build-dotnet-tarball %%{upstream_tag} or commit
 %global tarball_name dotnet-sdk-source-%{upstream_tag}
-Source0:        https://github.com/dotnet/dotnet/archive/refs/tags/%{upstream_tag}.tar.gz#/dotnet-%{upstream_tag}.tar.gz
+Source0:        https://github.com/dotnet/dotnet/archive/refs/tags/%{upstream_tag}.tar.gz#/dotnet-%{upstream_tag_without_v}.tar.gz
+Source1:        https://github.com/dotnet/dotnet/archive/refs/tags/%{upstream_tag}.tar.gz#/dotnet-%{upstream_tag_without_v}.tar.gz.sig
+Source2:        https://dotnet.microsoft.com/download/dotnet/release-key-2023.asc
 %endif
 Source5:        https://github.com/dotnet/dotnet/releases/download/%{upstream_tag}/release.json
 
@@ -94,6 +96,12 @@ Patch2:         vstest-intent-net8.0.patch
 Patch3:         runtime-re-enable-implicit-rejection.patch
 # https://github.com/dotnet/msbuild/pull/9449
 Patch4:         msbuild-9449-exec-stop-setting-a-locale.patch
+# We disable checking the signature of the last certificate in a chain
+# if the certificate is supposedly self-signed. A side effect of not
+# checking the self-signature of such a certificate is that disabled
+# or unsupported message digests used for the signature are not
+# treated as fatal errors. https://issues.redhat.com/browse/RHEL-25254
+Patch5:         runtime-openssl-sha1.patch
 
 
 ExclusiveArch:  aarch64 ppc64le s390x x86_64
@@ -111,6 +119,7 @@ BuildRequires:  git
 %if 0%{?fedora} || 0%{?rhel} > 7
 BuildRequires:  glibc-langpack-en
 %endif
+BuildRequires:  gnupg2
 BuildRequires:  hostname
 BuildRequires:  krb5-devel
 BuildRequires:  libicu-devel
@@ -403,8 +412,10 @@ These are not meant for general use.
 
 
 %prep
+%{gpgverify} --keyring='%{SOURCE2}' --signature='%{SOURCE1}' --data='%{SOURCE0}'
+
 release_json_tag=$(grep tag %{SOURCE5} | cut -d: -f2 | sed -E 's/[," ]*//g')
-if [[ ${release_json_tag} != %{upstream_tag_without_v} ]]; then
+if [[ ${release_json_tag} != %{upstream_tag} ]]; then
    echo "error: tag in release.json doesn't match tag in spec file"
    exit 1
 fi
@@ -706,6 +717,18 @@ export COMPlus_LTTng=0
 
 
 %changelog
+* Wed Mar 06 2024 Tom Deseyn <tom.deseyn@gmail.com> - 8.0.103-2
+- We disable checking the signature of the last certificate in a chain
+  if the certificate is supposedly self-signed. A side effect of not
+  checking the self-signature of such a certificate is that disabled
+  or unsupported message digests used for the signature are not
+  treated as fatal errors.
+- Resolves: RHEL-28343
+
+* Thu Feb 29 2024 Omair Majid <omajid@redhat.com> - 8.0.103-1
+- Update to .NET SDK 8.0.103 and Runtime 8.0.3
+- Resolves: RHEL-27552
+
 * Sat Feb 03 2024 Omair Majid <omajid@redhat.com> - 8.0.102-2
 - Don't set a locale when running msbuild Exec on Unix
 - Resolves: RHEL-23938
