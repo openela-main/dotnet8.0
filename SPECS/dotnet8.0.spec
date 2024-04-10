@@ -8,10 +8,10 @@
 
 %global dotnetver 8.0
 
-%global host_version 8.0.3
-%global runtime_version 8.0.3
+%global host_version 8.0.4
+%global runtime_version 8.0.4
 %global aspnetcore_runtime_version %{runtime_version}
-%global sdk_version 8.0.103
+%global sdk_version 8.0.104
 %global sdk_feature_band_version %(echo %{sdk_version} | cut -d '-' -f 1 | sed -e 's|[[:digit:]][[:digit:]]$|00|')
 %global templates_version %{runtime_version}
 #%%global templates_version %%(echo %%{runtime_version} | awk 'BEGIN { FS="."; OFS="." } {print $1, $2, $3+1 }')
@@ -417,7 +417,7 @@ if [[ ${release_json_tag} != %{upstream_tag} ]]; then
 fi
 
 %if %{without bootstrap_dotnet}
-%setup -q -c -n dotnet-%{upstream_tag_without_v}
+%setup -q -n dotnet-%{upstream_tag_without_v}
 
 # Remove all prebuilts
 find -iname '*.dll' -type f -delete
@@ -716,6 +716,10 @@ export COMPlus_LTTng=0
 
 
 %changelog
+* Tue Apr 02 2024 Omair Majid <omajid@redhat.com> - 8.0.104-1
+- Update to .NET SDK 8.0.104 and Runtime 8.0.4
+- Resolves: RHEL-31206
+
 * Thu Feb 29 2024 Omair Majid <omajid@redhat.com> - 8.0.103-1
 - Update to .NET SDK 8.0.103 and Runtime 8.0.3
 - Resolves: RHEL-27550
