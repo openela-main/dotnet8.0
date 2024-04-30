@@ -16,7 +16,6 @@
 %global templates_version %{runtime_version}
 #%%global templates_version %%(echo %%{runtime_version} | awk 'BEGIN { FS="."; OFS="." } {print $1, $2, $3+1 }')
 
-# upstream can produce releases with a different tag than the SDK version
 %global upstream_tag v%{runtime_version}
 %global upstream_tag_without_v %(echo %{upstream_tag} | sed -e 's|^v||')
 
@@ -48,13 +47,13 @@
 %global runtime_arch x64
 %endif
 
-%global mono_archs s390x ppc64le
+%global mono_archs ppc64le s390x
 
 %{!?runtime_id:%global runtime_id %(. /etc/os-release ; echo "${ID}.${VERSION_ID%%.*}")-%{runtime_arch}}
 
 Name:           dotnet%{dotnetver}
 Version:        %{sdk_rpm_version}
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        .NET Runtime and SDK
 License:        0BSD AND Apache-2.0 AND (Apache-2.0 WITH LLVM-exception) AND APSL-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-4-Clause AND BSL-1.0 AND bzip2-1.0.6 AND CC0-1.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC-PDDC AND CNRI-Python AND EPL-1.0 AND GPL-2.0-only AND (GPL-2.0-only WITH GCC-exception-2.0) AND GPL-2.0-or-later AND GPL-3.0-only AND ICU AND ISC AND LGPL-2.1-only AND LGPL-2.1-or-later AND LicenseRef-Fedora-Public-Domain AND LicenseRef-ISO-8879 AND MIT AND MIT-Wu AND MS-PL AND MS-RL AND NCSA AND OFL-1.1 AND OpenSSL AND Unicode-DFS-2015 AND Unicode-DFS-2016 AND W3C-19980720 AND X11 AND Zlib
 
@@ -73,17 +72,11 @@ Source2:        dotnet-prebuilts-%{bootstrap_sdk_version}-ppc64le.tar.gz
 # Generated manually, same pattern as the arm64 tarball
 Source3:        dotnet-prebuilts-%{bootstrap_sdk_version}-s390x.tar.gz
 %else
-# For non-releases, the source is generated on a Fedora box via:
-# ./build-dotnet-tarball %%{upstream_tag} or commit
-%global tarball_name dotnet-sdk-source-%{upstream_tag}
 Source0:        https://github.com/dotnet/dotnet/archive/refs/tags/%{upstream_tag}.tar.gz#/dotnet-%{upstream_tag_without_v}.tar.gz
 Source1:        https://github.com/dotnet/dotnet/archive/refs/tags/%{upstream_tag}.tar.gz#/dotnet-%{upstream_tag_without_v}.tar.gz.sig
 Source2:        https://dotnet.microsoft.com/download/dotnet/release-key-2023.asc
 %endif
 Source5:        https://github.com/dotnet/dotnet/releases/download/%{upstream_tag}/release.json
-
-#Source10:       %%{tarball_name}-nm-dev.tgz
-#Source11:       %%{tarball_name}-nm-prod.tgz
 
 Source20:       check-debug-symbols.py
 Source21:       dotnet.sh.in
@@ -96,11 +89,10 @@ Patch2:         vstest-intent-net8.0.patch
 Patch3:         runtime-re-enable-implicit-rejection.patch
 # https://github.com/dotnet/msbuild/pull/9449
 Patch4:         msbuild-9449-exec-stop-setting-a-locale.patch
-# We disable checking the signature of the last certificate in a chain
-# if the certificate is supposedly self-signed. A side effect of not
-# checking the self-signature of such a certificate is that disabled
-# or unsupported message digests used for the signature are not
-# treated as fatal errors. https://issues.redhat.com/browse/RHEL-25254
+# We disable checking the signature of the last certificate in a chain if the certificate is supposedly self-signed.
+# A side effect of not checking the self-signature of such a certificate is that disabled or unsupported message
+# digests used for the signature are not treated as fatal errors.
+# https://issues.redhat.com/browse/RHEL-25254
 Patch5:         runtime-openssl-sha1.patch
 
 
@@ -483,6 +475,9 @@ popd
 
 %autopatch -p1 -M 999
 
+# Fix bad hardcoded path in build
+sed -i 's|/usr/share/dotnet|%{_libdir}/dotnet|' src/runtime/src/native/corehost/hostmisc/pal.unix.cpp
+
 %if ! %{use_bundled_libunwind}
 sed -i -E 's|( /p:BuildDebPackage=false)|\1 --cmakeargs -DCLR_CMAKE_USE_SYSTEM_LIBUNWIND=TRUE|' src/runtime/eng/SourceBuild.props
 %endif
@@ -717,45 +712,39 @@ export COMPlus_LTTng=0
 
 
 %changelog
-* Tue Apr 02 2024 Omair Majid <omajid@redhat.com> - 8.0.104-1
+* Tue Apr 09 2024 Omair Majid <omajid@redhat.com> - 8.0.104-2
 - Update to .NET SDK 8.0.104 and Runtime 8.0.4
-- Resolves: RHEL-31207
+- Resolves: RHEL-31208
 
-* Wed Mar 06 2024 Tom Deseyn <tom.deseyn@gmail.com> - 8.0.103-2
-- We disable checking the signature of the last certificate in a chain
-  if the certificate is supposedly self-signed. A side effect of not
-  checking the self-signature of such a certificate is that disabled
-  or unsupported message digests used for the signature are not
-  treated as fatal errors.
-- Resolves: RHEL-28343
+* Sun Mar 31 2024 Tom Deseyn <tom.deseyn@gmail.com> - 8.0.103-3
+- We disable checking the signature of the last certificate in a chain if the certificate is supposedly self-signed.
+  A side effect of not checking the self-signature of such a certificate is that disabled or unsupported message
+  digests used for the signature are not treated as fatal errors.
+- Resolves: RHEL-28344
 
-* Thu Feb 29 2024 Omair Majid <omajid@redhat.com> - 8.0.103-1
+* Tue Mar 19 2024 Omair Majid <omajid@redhat.com> - 8.0.103-2
 - Update to .NET SDK 8.0.103 and Runtime 8.0.3
-- Resolves: RHEL-27552
+- Resolves: RHEL-27553
 
-* Sat Feb 03 2024 Omair Majid <omajid@redhat.com> - 8.0.102-2
-- Don't set a locale when running msbuild Exec on Unix
-- Resolves: RHEL-23938
+* Tue Feb 20 2024 Tom Deseyn <tom.deseyn@gmail.com> - 8.0.102-3
+- Backport MSBuild locale fix
+- Resolves: RHEL-23936
 
-* Thu Feb 01 2024 Omair Majid <omajid@redhat.com> - 8.0.102-1
+* Wed Feb 14 2024 Omair Majid <omajid@redhat.com> - 8.0.102-2
 - Update to .NET SDK 8.0.102 and Runtime 8.0.2
-- Resolves: RHEL-23805
+- Resolves: RHEL-23804
 
-* Tue Jan 30 2024 Omair Majid <omajid@redhat.com> - 8.0.101-2
+* Mon Jan 29 2024 Omair Majid <omajid@redhat.com> - 8.0.101-3
 - Add -dbg subpackages for symbol files
-- Resolves: RHEL-23072
+- Resolves: RHEL-23070
 
-* Wed Dec 20 2023 Omair Majid <omajid@redhat.com> - 8.0.101-1
+* Mon Jan 15 2024 Omair Majid <omajid@redhat.com> - 8.0.101-2
 - Update to .NET SDK 8.0.101 and Runtime 8.0.1
-- Resolves: RHEL-19809
+- Resolves: RHEL-19803
 
-* Wed Nov 08 2023 Omair Majid <omajid@redhat.com> - 8.0.100-2
-- Install more symbols
-- Related: RHEL-15861
-
-* Mon Nov 06 2023 Omair Majid <omajid@redhat.com> - 8.0.100-1
-- Update to .NET 8.0
-- Resolves: RHEL-15861
+* Wed Nov 15 2023 Omair Majid <omajid@redhat.com> - 8.0.100-3
+- Update to .NET SDK 8.0.100 and Runtime 8.0.0
+- Resolves: RHEL-15352
 
 * Mon Oct 16 2023 Omair Majid <omajid@redhat.com> - 8.0.100~rc.2-0.1
 - Update to .NET 8 RC 2
