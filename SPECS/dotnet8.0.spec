@@ -48,13 +48,13 @@
 %global runtime_arch x64
 %endif
 
-%global mono_archs s390x ppc64le
+%global mono_archs ppc64le s390x
 
 %{!?runtime_id:%global runtime_id %(. /etc/os-release ; echo "${ID}.${VERSION_ID%%.*}")-%{runtime_arch}}
 
 Name:           dotnet%{dotnetver}
 Version:        %{sdk_rpm_version}
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        .NET Runtime and SDK
 License:        0BSD AND Apache-2.0 AND (Apache-2.0 WITH LLVM-exception) AND APSL-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-4-Clause AND BSL-1.0 AND bzip2-1.0.6 AND CC0-1.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC-PDDC AND CNRI-Python AND EPL-1.0 AND GPL-2.0-only AND (GPL-2.0-only WITH GCC-exception-2.0) AND GPL-2.0-or-later AND GPL-3.0-only AND ICU AND ISC AND LGPL-2.1-only AND LGPL-2.1-or-later AND LicenseRef-Fedora-Public-Domain AND LicenseRef-ISO-8879 AND MIT AND MIT-Wu AND MS-PL AND MS-RL AND NCSA AND OFL-1.1 AND OpenSSL AND Unicode-DFS-2015 AND Unicode-DFS-2016 AND W3C-19980720 AND X11 AND Zlib
 
@@ -73,17 +73,11 @@ Source2:        dotnet-prebuilts-%{bootstrap_sdk_version}-ppc64le.tar.gz
 # Generated manually, same pattern as the arm64 tarball
 Source3:        dotnet-prebuilts-%{bootstrap_sdk_version}-s390x.tar.gz
 %else
-# For non-releases, the source is generated on a Fedora box via:
-# ./build-dotnet-tarball %%{upstream_tag} or commit
-%global tarball_name dotnet-sdk-source-%{upstream_tag}
 Source0:        https://github.com/dotnet/dotnet/archive/refs/tags/%{upstream_tag}.tar.gz#/dotnet-%{upstream_tag_without_v}.tar.gz
 Source1:        https://github.com/dotnet/dotnet/archive/refs/tags/%{upstream_tag}.tar.gz.sig#/dotnet-%{upstream_tag_without_v}.tar.gz.sig
 Source2:        https://dotnet.microsoft.com/download/dotnet/release-key-2023.asc
 %endif
 Source5:        https://github.com/dotnet/dotnet/releases/download/%{upstream_tag}/release.json
-
-#Source10:       %%{tarball_name}-nm-dev.tgz
-#Source11:       %%{tarball_name}-nm-prod.tgz
 
 Source20:       check-debug-symbols.py
 Source21:       dotnet.sh.in
@@ -716,37 +710,37 @@ export COMPlus_LTTng=0
 
 
 %changelog
-* Tue Apr 02 2024 Omair Majid <omajid@redhat.com> - 8.0.104-1
+* Tue Apr 09 2024 Omair Majid <omajid@redhat.com> - 8.0.104-2
 - Update to .NET SDK 8.0.104 and Runtime 8.0.4
-- Resolves: RHEL-31206
+- Resolves: RHEL-31204
 
-* Thu Feb 29 2024 Omair Majid <omajid@redhat.com> - 8.0.103-1
+* Tue Mar 19 2024 Omair Majid <omajid@redhat.com> - 8.0.103-2
 - Update to .NET SDK 8.0.103 and Runtime 8.0.3
-- Resolves: RHEL-27550
+- Resolves: RHEL-27551
 
-* Sat Feb 03 2024 Omair Majid <omajid@redhat.com> - 8.0.102-2
-- Don't set a locale when running msbuild Exec on Unix
-- Resolves: RHEL-23939
+* Tue Feb 20 2024 Tom Deseyn <tom.deseyn@gmail.com> - 8.0.102-3
+- Backport MSBuild locale fix
+- Resolves: RHEL-23937
 
-* Thu Feb 01 2024 Omair Majid <omajid@redhat.com> - 8.0.102-1
+* Wed Feb 14 2024 Omair Majid <omajid@redhat.com> - 8.0.102-2
 - Update to .NET SDK 8.0.102 and Runtime 8.0.2
-- Resolves: RHEL-23803
+- Resolves: RHEL-23802
 
-* Tue Jan 30 2024 Omair Majid <omajid@redhat.com> - 8.0.101-2
+* Mon Jan 29 2024 Omair Majid <omajid@redhat.com> - 8.0.101-4
 - Add -dbg subpackages for symbol files
-- Resolves: RHEL-23073
+- Resolves: RHEL-23071
 
-* Wed Dec 20 2023 Omair Majid <omajid@redhat.com> - 8.0.101-1
+* Thu Jan 18 2024 Omair Majid <omajid@redhat.com> - 8.0.101-3
+- Stop enforcing pdb checking on s390x
+- Related: RHEL-19800
+
+* Mon Jan 15 2024 Omair Majid <omajid@redhat.com> - 8.0.101-2
 - Update to .NET SDK 8.0.101 and Runtime 8.0.1
-- Resolves: RHEL-19806
+- Resolves: RHEL-19800
 
-* Mon Nov 06 2023 Omair Majid <omajid@redhat.com> - 8.0.100-2
-- Add more symbol files
-- Related: RHEL-15863
-
-* Mon Nov 06 2023 Omair Majid <omajid@redhat.com> - 8.0.100-1
-- Update to .NET 8
-- Resolves: RHEL-15863
+* Wed Nov 15 2023 Omair Majid <omajid@redhat.com> - 8.0.100-3
+- Update to .NET SDK 8.0.100 and Runtime 8.0.0
+- Resolves: RHEL-15353
 
 * Wed Oct 25 2023 Omair Majid <omajid@redhat.com> - 8.0.100~rc.2-0.2
 - Fix runtime package version
