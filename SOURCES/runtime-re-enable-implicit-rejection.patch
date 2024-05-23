@@ -47,33 +47,6 @@ index 39f3ebc82ec..5b97f468a42 100644
              using (RSA rsa = RSAFactory.Create(TestData.RSA2048Params))
              {
                  void RoundtripEmpty(RSAEncryptionPadding paddingMode)
-@@ -716,26 +725,6 @@ public void NotSupportedValueMethods()
-             }
-         }
- 
--        [ConditionalTheory]
--        [InlineData(new byte[] { 1, 2, 3, 4 })]
--        [InlineData(new byte[0])]
--        public void Decrypt_Pkcs1_ErrorsForInvalidPadding(byte[] data)
--        {
--            if (data.Length == 0 && !PlatformSupportsEmptyRSAEncryption)
--            {
--                throw new SkipTestException("Platform does not support RSA encryption of empty data.");
--            }
--
--            using (RSA rsa = RSAFactory.Create(TestData.RSA2048Params))
--            {
--                byte[] encrypted = Encrypt(rsa, data, RSAEncryptionPadding.Pkcs1);
--                encrypted[1] ^= 0xFF;
--
--                // PKCS#1, the data, and the key are all deterministic so this should always throw an exception.
--                Assert.ThrowsAny<CryptographicException>(() => Decrypt(rsa, encrypted, RSAEncryptionPadding.Pkcs1));
--            }
--        }
--
-         [Fact]
-         public void Decrypt_Pkcs1_BadPadding()
-         {
 @@ -757,23 +746,5 @@ public static IEnumerable<object[]> OaepPaddingModes
                  }
              }
