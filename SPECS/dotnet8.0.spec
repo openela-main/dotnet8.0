@@ -8,10 +8,10 @@
 
 %global dotnetver 8.0
 
-%global host_version 8.0.7
-%global runtime_version 8.0.7
+%global host_version 8.0.8
+%global runtime_version 8.0.8
 %global aspnetcore_runtime_version %{runtime_version}
-%global sdk_version 8.0.107
+%global sdk_version 8.0.108
 %global sdk_feature_band_version %(echo %{sdk_version} | cut -d '-' -f 1 | sed -e 's|[[:digit:]][[:digit:]]$|00|')
 %global templates_version %{runtime_version}
 #%%global templates_version %%(echo %%{runtime_version} | awk 'BEGIN { FS="."; OFS="." } {print $1, $2, $3+1 }')
@@ -701,7 +701,9 @@ export COMPlus_LTTng=0
 %{_libdir}/dotnet/sdk-manifests/%{sdk_feature_band_version}*
 %{_libdir}/dotnet/metadata
 %dir %{_libdir}/dotnet/packs
+%dir %{_libdir}/dotnet/packs/Microsoft.AspNetCore.App.Runtime.%{runtime_id}
 %{_libdir}/dotnet/packs/Microsoft.AspNetCore.App.Runtime.%{runtime_id}/%{aspnetcore_runtime_version}
+%dir %{_libdir}/dotnet/packs/Microsoft.NETCore.App.Runtime.%{runtime_id}
 %{_libdir}/dotnet/packs/Microsoft.NETCore.App.Runtime.%{runtime_id}/%{runtime_version}
 
 %files -n dotnet-sdk-dbg-%{dotnetver} -f dotnet-sdk-dbg-files
@@ -712,6 +714,14 @@ export COMPlus_LTTng=0
 
 
 %changelog
+* Thu Aug 01 2024 Omair Majid <omajid@redhat.com> - 8.0.108-1
+- Update to .NET SDK 8.0.108 and Runtime 8.0.8
+- Resolves: RHEL-52389
+
+* Wed Jul 10 2024 Omair Majid <omajid@redhat.com> - 8.0.107-2
+- Fix ownership of some missed directories
+- Resolves: RHEL-47080
+
 * Thu Jun 27 2024 Omair Majid <omajid@redhat.com> - 8.0.107-1
 - Update to .NET SDK 8.0.107 and Runtime 8.0.7
 - Resolves: RHEL-45324
