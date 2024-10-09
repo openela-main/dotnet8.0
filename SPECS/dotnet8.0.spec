@@ -8,10 +8,10 @@
 
 %global dotnetver 8.0
 
-%global host_version 8.0.8
-%global runtime_version 8.0.8
+%global host_version 8.0.10
+%global runtime_version 8.0.10
 %global aspnetcore_runtime_version %{runtime_version}
-%global sdk_version 8.0.108
+%global sdk_version 8.0.110
 %global sdk_feature_band_version %(echo %{sdk_version} | cut -d '-' -f 1 | sed -e 's|[[:digit:]][[:digit:]]$|00|')
 %global templates_version %{runtime_version}
 #%%global templates_version %%(echo %%{runtime_version} | awk 'BEGIN { FS="."; OFS="." } {print $1, $2, $3+1 }')
@@ -533,7 +533,8 @@ export EXTRA_LDFLAGS="$LDFLAGS"
 # suggested compile-time change doesn't work, unfortunately.
 export COMPlus_LTTng=0
 
-VERBOSE=1 ./build.sh \
+VERBOSE=1 timeout 6h \
+    ./build.sh \
 %if %{without bootstrap}
     --with-sdk previously-built-dotnet \
 %endif
@@ -714,6 +715,14 @@ export COMPlus_LTTng=0
 
 
 %changelog
+* Sat Sep 28 2024 Omair Majid <omajid@redhat.com> - 8.0.110-1
+- Update to .NET SDK 8.0.110 and Runtime 8.0.10
+- Resolves: RHEL-60800
+
+* Thu Aug 29 2024 Omair Majid <omajid@redhat.com> - 8.0.109-1
+- Update to .NET SDK 8.0.109 and Runtime 8.0.9
+- Resolves: RHEL-56679
+
 * Thu Aug 01 2024 Omair Majid <omajid@redhat.com> - 8.0.108-1
 - Update to .NET SDK 8.0.108 and Runtime 8.0.8
 - Resolves: RHEL-52389
