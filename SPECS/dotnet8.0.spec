@@ -8,10 +8,10 @@
 
 %global dotnetver 8.0
 
-%global host_version 8.0.8
-%global runtime_version 8.0.8
+%global host_version 8.0.10
+%global runtime_version 8.0.10
 %global aspnetcore_runtime_version %{runtime_version}
-%global sdk_version 8.0.108
+%global sdk_version 8.0.110
 %global sdk_feature_band_version %(echo %{sdk_version} | cut -d '-' -f 1 | sed -e 's|[[:digit:]][[:digit:]]$|00|')
 %global templates_version %{runtime_version}
 #%%global templates_version %%(echo %%{runtime_version} | awk 'BEGIN { FS="."; OFS="." } {print $1, $2, $3+1 }')
@@ -712,7 +712,11 @@ export COMPlus_LTTng=0
 
 
 %changelog
-* Thu Aug 01 2024 Omair Majid <omajid@redhat.com> - 8.0.108-1
+* Sat Sep 28 2024 Omair Majid <omajid@redhat.com> - 8.0.110-1
+- Update to .NET SDK 8.0.110 and Runtime 8.0.10
+- Resolves: RHEL-60794
+
+* Wed Aug 14 2024 Omair Majid <omajid@redhat.com> - 8.0.108-2
 - Update to .NET SDK 8.0.108 and Runtime 8.0.8
 - Resolves: RHEL-52388
 
