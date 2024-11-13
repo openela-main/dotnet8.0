@@ -8,10 +8,14 @@
 
 %global dotnetver 8.0
 
-%global host_version 8.0.10
-%global runtime_version 8.0.10
+# Only the package for the latest dotnet version should provide RPMs like
+# dotnet-host and netstandard-targeting-pack-2.1
+%global is_latest_dotnet 0
+
+%global host_version 8.0.11
+%global runtime_version 8.0.11
 %global aspnetcore_runtime_version %{runtime_version}
-%global sdk_version 8.0.110
+%global sdk_version 8.0.111
 %global sdk_feature_band_version %(echo %{sdk_version} | cut -d '-' -f 1 | sed -e 's|[[:digit:]][[:digit:]]$|00|')
 %global templates_version %{runtime_version}
 #%%global templates_version %%(echo %%{runtime_version} | awk 'BEGIN { FS="."; OFS="." } {print $1, $2, $3+1 }')
@@ -388,7 +392,9 @@ applications using the .NET SDK.
 %dotnet_targeting_pack dotnet-apphost-pack-%{dotnetver} %{runtime_rpm_version} Microsoft.NETCore.App %{dotnetver} Microsoft.NETCore.App.Host.%{runtime_id}
 %dotnet_targeting_pack dotnet-targeting-pack-%{dotnetver} %{runtime_rpm_version} Microsoft.NETCore.App %{dotnetver} Microsoft.NETCore.App.Ref
 %dotnet_targeting_pack aspnetcore-targeting-pack-%{dotnetver} %{aspnetcore_runtime_rpm_version} Microsoft.AspNetCore.App %{dotnetver} Microsoft.AspNetCore.App.Ref
+%if %{is_latest_dotnet}
 %dotnet_targeting_pack netstandard-targeting-pack-2.1 %{sdk_rpm_version} NETStandard.Library 2.1 NETStandard.Library.Ref
+%endif
 
 
 %package -n dotnet-sdk-%{dotnetver}-source-built-artifacts
@@ -533,7 +539,7 @@ export EXTRA_LDFLAGS="$LDFLAGS"
 # suggested compile-time change doesn't work, unfortunately.
 export COMPlus_LTTng=0
 
-VERBOSE=1 timeout 6h \
+VERBOSE=1 timeout 5h \
     ./build.sh \
 %if %{without bootstrap}
     --with-sdk previously-built-dotnet \
@@ -595,6 +601,7 @@ find %{buildroot}%{_libdir}/dotnet/ -type f -name '*.targets' -exec chmod -x {} 
 find %{buildroot}%{_libdir}/dotnet/ -type f -name '*.txt' -exec chmod -x {} \;
 find %{buildroot}%{_libdir}/dotnet/ -type f -name '*.xml' -exec chmod -x {} \;
 
+%if %{is_latest_dotnet}
 install -dm 0755 %{buildroot}%{_sysconfdir}/profile.d/
 install dotnet.sh %{buildroot}%{_sysconfdir}/profile.d/
 
@@ -619,6 +626,7 @@ echo "%{_libdir}/dotnet" >> install_location
 install install_location %{buildroot}%{_sysconfdir}/dotnet/
 echo "%{_libdir}/dotnet" >> install_location_%{runtime_arch}
 install install_location_%{runtime_arch} %{buildroot}%{_sysconfdir}/dotnet/
+%endif
 
 install -dm 0755 %{buildroot}%{_libdir}/dotnet/source-built-artifacts
 install -m 0644 artifacts/%{runtime_arch}/Release/Private.SourceBuilt.Artifacts.*.tar.gz %{buildroot}/%{_libdir}/dotnet/source-built-artifacts/
@@ -642,6 +650,19 @@ find %{buildroot}%{_libdir}/dotnet/sdk -type d | tail -n +2 | sed -E 's|%{buildr
 find %{buildroot}%{_libdir}/dotnet/sdk -type f -and -not -name '*.pdb' | sed -E 's|%{buildroot}||' >> dotnet-sdk-non-dbg-files
 find %{buildroot}%{_libdir}/dotnet/sdk -type f -name '*.pdb'  | sed -E 's|%{buildroot}||' > dotnet-sdk-dbg-files
 
+%if %{is_latest_dotnet} == 0
+# If this is an older version, self-test now, before we delete files. After we
+# delete files, we will not have everything we need to self-test in %%check.
+%{buildroot}%{_libdir}/dotnet/dotnet --info
+%{buildroot}%{_libdir}/dotnet/dotnet --version
+
+# Provided by dotnet-host from another SRPM
+rm %{buildroot}%{_libdir}/dotnet/LICENSE.txt
+rm %{buildroot}%{_libdir}/dotnet/ThirdPartyNotices.txt
+rm %{buildroot}%{_libdir}/dotnet/dotnet
+# Provided by netstandard-targeting-pack-2.1 from another SRPM
+rm -rf %{buildroot}%{_libdir}/dotnet/packs/NETStandard.Library.Ref/2.1.0
+%endif
 
 %check
 %if 0%{?fedora} > 35
@@ -649,8 +670,10 @@ find %{buildroot}%{_libdir}/dotnet/sdk -type f -name '*.pdb'  | sed -E 's|%{buil
 export COMPlus_LTTng=0
 %endif
 
+%if %{is_latest_dotnet}
 %{buildroot}%{_libdir}/dotnet/dotnet --info
 %{buildroot}%{_libdir}/dotnet/dotnet --version
+%endif
 
 
 %if ( 0%{?fedora} && 0%{?fedora} < 38 ) || ( 0%{?rhel} && 0%{?rhel} < 9 )
@@ -658,6 +681,7 @@ export COMPlus_LTTng=0
 # empty package useful for dependencies
 %endif
 
+%if %{is_latest_dotnet}
 %files -n dotnet-host
 %dir %{_libdir}/dotnet
 %{_libdir}/dotnet/dotnet
@@ -673,6 +697,7 @@ export COMPlus_LTTng=0
 %dir %{_datadir}/bash-completion
 %dir %{_datadir}/bash-completion/completions
 %{_datadir}/bash-completion/completions/dotnet
+%endif
 
 %files -n dotnet-hostfxr-%{dotnetver}
 %dir %{_libdir}/dotnet/host/fxr
@@ -715,29 +740,33 @@ export COMPlus_LTTng=0
 
 
 %changelog
-* Sat Sep 28 2024 Omair Majid <omajid@redhat.com> - 8.0.110-1
+* Thu Oct 31 2024 Omair Majid <omajid@redhat.com> - 8.0.111-1
+- Update to .NET SDK 8.0.111 and Runtime 8.0.11
+- Resolves: RHEL-65369
+
+* Fri Oct 18 2024 Omair Majid <omajid@redhat.com> - 8.0.110-3
+- Disable packages provided by another .NET version
+- Related: RHEL-60801
+
+* Tue Oct 15 2024 Omair Majid <omajid@redhat.com> - 8.0.110-2
 - Update to .NET SDK 8.0.110 and Runtime 8.0.10
-- Resolves: RHEL-60800
+- Resolves: RHEL-60801
 
-* Thu Aug 29 2024 Omair Majid <omajid@redhat.com> - 8.0.109-1
-- Update to .NET SDK 8.0.109 and Runtime 8.0.9
-- Resolves: RHEL-56679
-
-* Thu Aug 01 2024 Omair Majid <omajid@redhat.com> - 8.0.108-1
+* Wed Aug 14 2024 Omair Majid <omajid@redhat.com> - 8.0.108-2
 - Update to .NET SDK 8.0.108 and Runtime 8.0.8
-- Resolves: RHEL-52389
+- Resolves: RHEL-52387
 
-* Wed Jul 10 2024 Omair Majid <omajid@redhat.com> - 8.0.107-2
+* Wed Jul 10 2024 Omair Majid <omajid@redhat.com> - 8.0.107-3
 - Fix ownership of some missed directories
-- Resolves: RHEL-47080
+- Resolves: RHEL-47079
 
-* Thu Jun 27 2024 Omair Majid <omajid@redhat.com> - 8.0.107-1
+* Tue Jul 09 2024 Omair Majid <omajid@redhat.com> - 8.0.107-2
 - Update to .NET SDK 8.0.107 and Runtime 8.0.7
-- Resolves: RHEL-45324
+- Resolves: RHEL-45323
 
-* Mon May 06 2024 Omair Majid <omajid@redhat.com> - 8.0.105-1
+* Wed May 15 2024 Omair Majid <omajid@redhat.com> - 8.0.105-2
 - Update to .NET SDK 8.0.105 and Runtime 8.0.5
-- Resolves: RHEL-35317
+- Resolves: RHEL-35315
 
 * Tue Apr 09 2024 Omair Majid <omajid@redhat.com> - 8.0.104-2
 - Update to .NET SDK 8.0.104 and Runtime 8.0.4
