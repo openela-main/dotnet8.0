@@ -57,7 +57,7 @@
 
 Name:           dotnet%{dotnetver}
 Version:        %{sdk_rpm_version}
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        .NET Runtime and SDK
 License:        0BSD AND Apache-2.0 AND (Apache-2.0 WITH LLVM-exception) AND APSL-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-4-Clause AND BSL-1.0 AND bzip2-1.0.6 AND CC0-1.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC-PDDC AND CNRI-Python AND EPL-1.0 AND GPL-2.0-only AND (GPL-2.0-only WITH GCC-exception-2.0) AND GPL-2.0-or-later AND GPL-3.0-only AND ICU AND ISC AND LGPL-2.1-only AND LGPL-2.1-or-later AND LicenseRef-Fedora-Public-Domain AND LicenseRef-ISO-8879 AND MIT AND MIT-Wu AND MS-PL AND MS-RL AND NCSA AND OFL-1.1 AND OpenSSL AND Unicode-DFS-2015 AND Unicode-DFS-2016 AND W3C-19980720 AND X11 AND Zlib
 
@@ -539,8 +539,7 @@ export EXTRA_LDFLAGS="$LDFLAGS"
 # suggested compile-time change doesn't work, unfortunately.
 export COMPlus_LTTng=0
 
-VERBOSE=1 timeout 5h \
-    ./build.sh \
+VERBOSE=1 ./build.sh \
 %if %{without bootstrap}
     --with-sdk previously-built-dotnet \
 %endif
@@ -740,25 +739,25 @@ export COMPlus_LTTng=0
 
 
 %changelog
-* Thu Mar 27 2025 Omair Majid <omajid@redhat.com> - 8.0.115-1
+* Wed Apr 09 2025 Omair Majid <omajid@redhat.com> - 8.0.115-2
 - Update to .NET SDK 8.0.115 and Runtime 8.0.15
-- Resolves: RHEL-85287
+- Resolves: RHEL-85276
 
-* Thu Feb 27 2025 Omair Majid <omajid@redhat.com> - 8.0.114-1
+* Tue Mar 11 2025 Omair Majid <omajid@redhat.com> - 8.0.114-2
 - Update to .NET SDK 8.0.114 and Runtime 8.0.14
-- Resolves: RHEL-81640
+- Resolves: RHEL-81641
 
-* Thu Jan 30 2025 Omair Majid <omajid@redhat.com> - 8.0.113-1
+* Mon Feb 17 2025 Omair Majid <omajid@redhat.com> - 8.0.113-2
 - Update to .NET SDK 8.0.113 and Runtime 8.0.13
-- Resolves: RHEL-76902
+- Resolves: RHEL-76899
 
-* Tue Dec 17 2024 Omair Majid <omajid@redhat.com> - 8.0.112-1
+* Thu Jan 16 2025 Omair Majid <omajid@redhat.com> - 8.0.112-2
 - Update to .NET SDK 8.0.112 and Runtime 8.0.12
-- Resolves: RHEL-71556
+- Resolves: RHEL-71555
 
-* Thu Oct 31 2024 Omair Majid <omajid@redhat.com> - 8.0.111-1
+* Thu Nov 14 2024 Omair Majid <omajid@redhat.com> - 8.0.111-2
 - Update to .NET SDK 8.0.111 and Runtime 8.0.11
-- Resolves: RHEL-65369
+- Resolves: RHEL-65367
 
 * Fri Oct 18 2024 Omair Majid <omajid@redhat.com> - 8.0.110-3
 - Disable packages provided by another .NET version
