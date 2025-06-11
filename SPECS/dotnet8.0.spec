@@ -12,10 +12,10 @@
 # dotnet-host and netstandard-targeting-pack-2.1
 %global is_latest_dotnet 0
 
-%global host_version 8.0.16
-%global runtime_version 8.0.16
+%global host_version 8.0.17
+%global runtime_version 8.0.17
 %global aspnetcore_runtime_version %{runtime_version}
-%global sdk_version 8.0.116
+%global sdk_version 8.0.117
 %global sdk_feature_band_version %(echo %{sdk_version} | cut -d '-' -f 1 | sed -e 's|[[:digit:]][[:digit:]]$|00|')
 %global templates_version %{runtime_version}
 #%%global templates_version %%(echo %%{runtime_version} | awk 'BEGIN { FS="."; OFS="." } {print $1, $2, $3+1 }')
@@ -534,8 +534,36 @@ export EXTRA_LDFLAGS="$LDFLAGS"
 # suggested compile-time change doesn't work, unfortunately.
 export COMPlus_LTTng=0
 
-VERBOSE=1 timeout 5h \
-    ./build.sh \
+%ifarch ppc64le s390x
+max_attempts=3
+%else
+max_attempts=1
+%endif
+
+function retry_until_success {
+    local exit_code=1
+    local tries=$1
+    shift
+    set +e
+    while [[ $exit_code != 0 ]] && [[ $tries != 0 ]]; do
+        (( tries = tries - 1 ))
+        "$@"
+        exit_code=$?
+    done
+    set -e
+    return $exit_code
+}
+
+
+cat >dotnet-rpm-build.sh <<EOF
+#!/bin/bash
+
+set -euo pipefail
+set -x
+
+find -depth -name 'artifacts' -type d -print -exec rm -rf {} \;
+
+./build.sh \
 %if %{without bootstrap_dotnet}
     --with-sdk previously-built-dotnet \
 %endif
@@ -550,7 +578,15 @@ VERBOSE=1 timeout 5h \
     /p:MinimalConsoleLogOutput=false \
     /p:ContinueOnPrebuiltBaselineError=true \
     /v:n \
-    /p:LogVerbosity=n \
+    /p:LogVerbosity=n
+
+EOF
+
+chmod +x dotnet-rpm-build.sh
+
+VERBOSE=1 retry_until_success $max_attempts \
+    timeout 5h \
+    ./dotnet-rpm-build.sh
 
 
 sed -e 's|[@]LIBDIR[@]|%{_libdir}|g' %{SOURCE21} > dotnet.sh
@@ -739,7 +775,11 @@ export COMPlus_LTTng=0
 
 
 %changelog
-* Fri May 02 2025 Omair Majid <omajid@redhat.com> - 8.0.116-1
+* Thu May 29 2025 Omair Majid <omajid@redhat.com> - 8.0.117-1
+- Update to .NET SDK 8.0.117 and Runtime 8.0.17
+- Resolves: RHEL-94415
+
+* Tue May 13 2025 Omair Majid <omajid@redhat.com> - 8.0.116-2
 - Update to .NET SDK 8.0.116 and Runtime 8.0.16
 - Resolves: RHEL-89446
 
