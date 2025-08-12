@@ -12,16 +12,16 @@
 # dotnet-host and netstandard-targeting-pack-2.1
 %global is_latest_dotnet 0
 
-%global host_version 8.0.18
-%global runtime_version 8.0.18
+%global host_version 8.0.19
+%global runtime_version 8.0.19
 %global aspnetcore_runtime_version %{runtime_version}
-%global sdk_version 8.0.118
+%global sdk_version 8.0.119
 %global sdk_feature_band_version %(echo %{sdk_version} | cut -d '-' -f 1 | sed -e 's|[[:digit:]][[:digit:]]$|00|')
 %global templates_version %{runtime_version}
 #%%global templates_version %%(echo %%{runtime_version} | awk 'BEGIN { FS="."; OFS="." } {print $1, $2, $3+1 }')
 
 # upstream can produce releases with a different tag than the SDK version
-%global upstream_tag v%{runtime_version}
+%global upstream_tag v%{sdk_version}
 %global upstream_tag_without_v %(echo %{upstream_tag} | sed -e 's|^v||')
 
 %global host_rpm_version %{host_version}
@@ -77,8 +77,8 @@ Source2:        dotnet-prebuilts-%{bootstrap_sdk_version}-ppc64le.tar.gz
 # Generated manually, same pattern as the arm64 tarball
 Source3:        dotnet-prebuilts-%{bootstrap_sdk_version}-s390x.tar.gz
 %else
-Source0:        https://github.com/dotnet/dotnet/archive/refs/tags/%{upstream_tag}.tar.gz#/dotnet-%{upstream_tag_without_v}.tar.gz
-Source1:        https://github.com/dotnet/dotnet/archive/refs/tags/%{upstream_tag}.tar.gz.sig#/dotnet-%{upstream_tag_without_v}.tar.gz.sig
+Source0:        https://github.com/dotnet/dotnet/archive/refs/tags/%{upstream_tag}.tar.gz#/dotnet-%{runtime_version}.tar.gz
+Source1:        https://github.com/dotnet/dotnet/archive/refs/tags/%{upstream_tag}.tar.gz.sig#/dotnet-%{runtime_version}.tar.gz.sig
 Source2:        https://dotnet.microsoft.com/download/dotnet/release-key-2023.asc
 %endif
 Source5:        https://github.com/dotnet/dotnet/releases/download/%{upstream_tag}/release.json
@@ -775,7 +775,11 @@ export COMPlus_LTTng=0
 
 
 %changelog
-* Thu Jun 26 2025 Omair Majid <omajid@redhat.com> - 8.0.118-1
+* Thu Jul 31 2025 Omair Majid <omajid@redhat.com> - 8.0.119-1
+- Update to .NET SDK 8.0.119 and Runtime 8.0.19
+- Resolves: RHEL-106722
+
+* Tue Jul 08 2025 Omair Majid <omajid@redhat.com> - 8.0.118-2
 - Update to .NET SDK 8.0.118 and Runtime 8.0.18
 - Resolves: RHEL-100593
 
