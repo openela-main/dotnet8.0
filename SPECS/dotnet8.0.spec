@@ -57,7 +57,7 @@
 
 Name:           dotnet%{dotnetver}
 Version:        %{sdk_rpm_version}
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        .NET Runtime and SDK
 License:        0BSD AND Apache-2.0 AND (Apache-2.0 WITH LLVM-exception) AND APSL-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-4-Clause AND BSL-1.0 AND bzip2-1.0.6 AND CC0-1.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC-PDDC AND CNRI-Python AND EPL-1.0 AND GPL-2.0-only AND (GPL-2.0-only WITH GCC-exception-2.0) AND GPL-2.0-or-later AND GPL-3.0-only AND ICU AND ISC AND LGPL-2.1-only AND LGPL-2.1-or-later AND LicenseRef-Fedora-Public-Domain AND LicenseRef-ISO-8879 AND MIT AND MIT-Wu AND MS-PL AND MS-RL AND NCSA AND OFL-1.1 AND OpenSSL AND Unicode-DFS-2015 AND Unicode-DFS-2016 AND W3C-19980720 AND X11 AND Zlib
 
@@ -539,7 +539,36 @@ export EXTRA_LDFLAGS="$LDFLAGS"
 # suggested compile-time change doesn't work, unfortunately.
 export COMPlus_LTTng=0
 
-VERBOSE=1 ./build.sh \
+%ifarch ppc64le s390x
+max_attempts=3
+%else
+max_attempts=1
+%endif
+
+function retry_until_success {
+    local exit_code=1
+    local tries=$1
+    shift
+    set +e
+    while [[ $exit_code != 0 ]] && [[ $tries != 0 ]]; do
+        (( tries = tries - 1 ))
+        "$@"
+        exit_code=$?
+    done
+    set -e
+    return $exit_code
+}
+
+
+cat >dotnet-rpm-build.sh <<EOF
+#!/bin/bash
+
+set -euo pipefail
+set -x
+
+find -depth -name 'artifacts' -type d -print -exec rm -rf {} \;
+
+./build.sh \
 %if %{without bootstrap}
     --with-sdk previously-built-dotnet \
 %endif
@@ -551,7 +580,14 @@ VERBOSE=1 ./build.sh \
     /p:MinimalConsoleLogOutput=false \
     /p:ContinueOnPrebuiltBaselineError=true \
     /v:n \
-    /p:LogVerbosity=n \
+    /p:LogVerbosity=n
+EOF
+
+chmod +x dotnet-rpm-build.sh
+
+VERBOSE=1 retry_until_success $max_attempts \
+    timeout 5h \
+    ./dotnet-rpm-build.sh
 
 
 sed -e 's|[@]LIBDIR[@]|%{_libdir}|g' %{SOURCE21} > dotnet.sh
@@ -739,29 +775,29 @@ export COMPlus_LTTng=0
 
 
 %changelog
-* Sun Oct 05 2025 Omair Majid <omajid@redhat.com> - 8.0.121-1
+* Tue Oct 14 2025 Omair Majid <omajid@redhat.com> - 8.0.121-2
 - Update to .NET SDK 8.0.121 and Runtime 8.0.21
-- Resolves: RHEL-116866
+- Resolves: RHEL-116867
 
-* Tue Sep 02 2025 Omair Majid <omajid@redhat.com> - 8.0.120-1
+* Wed Sep 10 2025 Omair Majid <omajid@redhat.com> - 8.0.120-2
 - Update to .NET SDK 8.0.120 and Runtime 8.0.20
-- Resolves: RHEL-112259
+- Resolves: RHEL-112260
 
-* Thu Jul 31 2025 Omair Majid <omajid@redhat.com> - 8.0.119-1
+* Mon Aug 11 2025 Omair Majid <omajid@redhat.com> - 8.0.119-2
 - Update to .NET SDK 8.0.119 and Runtime 8.0.19
-- Resolves: RHEL-106725
+- Resolves: RHEL-106723
 
-* Thu Jun 26 2025 Omair Majid <omajid@redhat.com> - 8.0.118-1
+* Tue Jul 08 2025 Omair Majid <omajid@redhat.com> - 8.0.118-2
 - Update to .NET SDK 8.0.118 and Runtime 8.0.18
-- Resolves: RHEL-100595
+- Resolves: RHEL-100592
 
-* Thu May 29 2025 Omair Majid <omajid@redhat.com> - 8.0.117-1
+* Wed Jun 11 2025 Omair Majid <omajid@redhat.com> - 8.0.117-2
 - Update to .NET SDK 8.0.117 and Runtime 8.0.17
-- Resolves: RHEL-94420
+- Resolves: RHEL-94417
 
-* Fri May 02 2025 Omair Majid <omajid@redhat.com> - 8.0.116-1
+* Tue May 13 2025 Omair Majid <omajid@redhat.com> - 8.0.116-2
 - Update to .NET SDK 8.0.116 and Runtime 8.0.16
-- Resolves: RHEL-89448
+- Resolves: RHEL-89445
 
 * Wed Apr 09 2025 Omair Majid <omajid@redhat.com> - 8.0.115-2
 - Update to .NET SDK 8.0.115 and Runtime 8.0.15
