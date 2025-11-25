@@ -12,10 +12,10 @@
 # dotnet-host and netstandard-targeting-pack-2.1
 %global is_latest_dotnet 0
 
-%global host_version 8.0.21
-%global runtime_version 8.0.21
+%global host_version 8.0.22
+%global runtime_version 8.0.22
 %global aspnetcore_runtime_version %{runtime_version}
-%global sdk_version 8.0.121
+%global sdk_version 8.0.122
 %global sdk_feature_band_version %(echo %{sdk_version} | cut -d '-' -f 1 | sed -e 's|[[:digit:]][[:digit:]]$|00|')
 %global templates_version %{runtime_version}
 #%%global templates_version %%(echo %%{runtime_version} | awk 'BEGIN { FS="."; OFS="." } {print $1, $2, $3+1 }')
@@ -780,29 +780,33 @@ export COMPlus_LTTng=0
 
 
 %changelog
-* Sun Oct 05 2025 Omair Majid <omajid@redhat.com> - 8.0.121-1
+* Mon Nov 03 2025 Omair Majid <omajid@redhat.com> - 8.0.122-1
+- Update to .NET SDK 8.0.122 and Runtime 8.0.22
+- Resolves: RHEL-125741
+
+* Tue Oct 14 2025 Omair Majid <omajid@redhat.com> - 8.0.121-2
 - Update to .NET SDK 8.0.121 and Runtime 8.0.21
-- Resolves: RHEL-116868
+- Resolves: RHEL-116869
 
-* Tue Sep 02 2025 Omair Majid <omajid@redhat.com> - 8.0.120-1
+* Wed Sep 10 2025 Omair Majid <omajid@redhat.com> - 8.0.120-2
 - Update to .NET SDK 8.0.120 and Runtime 8.0.20
-- Resolves: RHEL-112261
+- Resolves: RHEL-112262
 
-* Thu Jul 31 2025 Omair Majid <omajid@redhat.com> - 8.0.119-1
+* Mon Aug 11 2025 Omair Majid <omajid@redhat.com> - 8.0.119-2
 - Update to .NET SDK 8.0.119 and Runtime 8.0.19
-- Resolves: RHEL-106724
+- Resolves: RHEL-106721
 
-* Thu Jun 26 2025 Omair Majid <omajid@redhat.com> - 8.0.118-1
+* Tue Jul 08 2025 Omair Majid <omajid@redhat.com> - 8.0.118-2
 - Update to .NET SDK 8.0.118 and Runtime 8.0.18
-- Resolves: RHEL-100596
+- Resolves: RHEL-100594
 
-* Thu May 29 2025 Omair Majid <omajid@redhat.com> - 8.0.117-1
+* Wed Jun 11 2025 Omair Majid <omajid@redhat.com> - 8.0.117-2
 - Update to .NET SDK 8.0.117 and Runtime 8.0.17
-- Resolves: RHEL-94418
+- Resolves: RHEL-94416
 
-* Fri May 02 2025 Omair Majid <omajid@redhat.com> - 8.0.116-1
+* Tue May 13 2025 Omair Majid <omajid@redhat.com> - 8.0.116-2
 - Update to .NET SDK 8.0.116 and Runtime 8.0.16
-- Resolves: RHEL-89449
+- Resolves: RHEL-89447
 
 * Wed Apr 09 2025 Omair Majid <omajid@redhat.com> - 8.0.115-2
 - Update to .NET SDK 8.0.115 and Runtime 8.0.15
