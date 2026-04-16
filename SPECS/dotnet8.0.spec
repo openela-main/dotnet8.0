@@ -12,10 +12,10 @@
 # dotnet-host and netstandard-targeting-pack-2.1
 %global is_latest_dotnet 0
 
-%global host_version 8.0.25
-%global runtime_version 8.0.25
+%global host_version 8.0.26
+%global runtime_version 8.0.26
 %global aspnetcore_runtime_version %{runtime_version}
-%global sdk_version 8.0.125
+%global sdk_version 8.0.126
 %global sdk_feature_band_version %(echo %{sdk_version} | cut -d '-' -f 1 | sed -e 's|[[:digit:]][[:digit:]]$|00|')
 %global templates_version %{runtime_version}
 #%%global templates_version %%(echo %%{runtime_version} | awk 'BEGIN { FS="."; OFS="." } {print $1, $2, $3+1 }')
@@ -775,7 +775,11 @@ export COMPlus_LTTng=0
 
 
 %changelog
-* Tue Mar 03 2026 Dominik Rehák <drehak@redhat.com> - 8.0.125-1
+* Wed Apr 08 2026 Omair Majid <omajid@redhat.com> - 8.0.126-1
+- Update to .NET SDK 8.0.126 and Runtime 8.0.26
+- Resolves: RHEL-163413
+
+* Tue Mar 03 2026 Dominik Rehák <drehak@redhat.com> - 8.0.125-2
 - Update to .NET SDK 8.0.125 and Runtime 8.0.25
 - Resolves: RHEL-152929
 
