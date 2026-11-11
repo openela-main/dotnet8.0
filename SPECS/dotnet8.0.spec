@@ -12,16 +12,16 @@
 # dotnet-host and netstandard-targeting-pack-2.1
 %global is_latest_dotnet 0
 
-%global host_version 8.0.33
-%global runtime_version 8.0.33
-%global aspnetcore_runtime_version 8.0.33
-%global sdk_version 8.0.133
+%global host_version 8.0.34
+%global runtime_version 8.0.34
+%global aspnetcore_runtime_version 8.0.34
+%global sdk_version 8.0.134
 %global sdk_feature_band_version %(echo %{sdk_version} | cut -d '-' -f 1 | sed -e 's|[[:digit:]][[:digit:]]$|00|')
 %global templates_version %{runtime_version}
 #%%global templates_version %%(echo %%{runtime_version} | awk 'BEGIN { FS="."; OFS="." } {print $1, $2, $3+1 }')
 
 # upstream can produce releases with a different tag than the SDK version
-%global upstream_tag v8.0.133
+%global upstream_tag v8.0.134
 %global upstream_tag_without_v %(echo %{upstream_tag} | sed -e 's|^v||')
 
 %global host_rpm_version %{host_version}
@@ -556,6 +556,66 @@ function retry_until_success {
     return $exit_code
 }
 
+# Runs a command and kills it if it produces no output.
+# Use a longer timeout on machines with fewer cores since builds are slower.
+function output_timeout {
+    # 30m on machines with more than 4 cores, 60m on smaller machines where builds are slower.
+    # The aarch64 Neoverse N1 CI machines have 4 cores and need the longer timeout.
+    local nprocs=$(nproc)
+    local idle_timeout=1800
+    if (( nprocs <= 4 )); then
+        idle_timeout=3600
+    fi
+
+    # Create a pipe we'll read the output from for timeout detection.
+    local fifo=$(mktemp -u)
+    mkfifo "$fifo"
+
+    # Create a process group so we can kill every process including children.
+    # And use a long timeout (5h) in (the unlikely) case output timeout detection continues to be triggered.
+    setsid timeout --foreground 5h "$@" &> "$fifo" &
+    local cmd_pid=$!
+
+    # Read lines from the output with a timeout.
+    # Disable tracing to avoid 'set -x' noise from the read loop appearing in the output.
+    local timed_out=false
+    local traceflags=$-
+    set +x
+    while true; do
+        local rc=0
+        IFS= read -t $idle_timeout -r line || rc=$?
+        if (( rc == 0 )); then
+            printf '%s\n' "$line"
+        elif (( rc > 128 )); then
+            echo "output_timeout: no output for ${idle_timeout}s" >&2
+            timed_out=true
+            break
+        else
+            [[ -z $line ]] || printf '%s\n' "$line"
+            break
+        fi
+    done < "$fifo"
+    [[ $traceflags != *x* ]] || set -x
+
+    if $timed_out; then
+        # Hang detected: kill the process group, then collect the exit code.
+        kill -9 -- -$cmd_pid 2>/dev/null || true
+        wait $cmd_pid 2>/dev/null
+        local exit_code=$?
+    else
+        # Normal exit: collect the real exit code, then clean up any orphaned processes.
+        wait $cmd_pid 2>/dev/null
+        local exit_code=$?
+        kill -9 -- -$cmd_pid 2>/dev/null || true
+    fi
+
+    # Cleanup.
+    rm -f "$fifo"
+
+    return $exit_code
+}
+
+
 
 cat >dotnet-rpm-build.sh <<EOF
 #!/bin/bash
@@ -587,7 +647,7 @@ EOF
 chmod +x dotnet-rpm-build.sh
 
 VERBOSE=1 retry_until_success $max_attempts \
-    timeout 5h \
+    output_timeout \
     ./dotnet-rpm-build.sh
 
 
@@ -777,6 +837,10 @@ export COMPlus_LTTng=0
 
 
 %changelog
+* Sat Nov 07 2026 Tom Deseyn <tdeseyn@redhat.com> - 8.0.134-1
+- Update to .NET SDK 8.0.134 and Runtime 8.0.34
+- Resolves: RHEL-302533
+
 * Mon Oct 26 2026 Omair Majid <omajid@redhat.com> - 8.0.133-1
 - Update to .NET SDK 8.0.133 and Runtime 8.0.33
 - Resolves: -RHEL-291714
