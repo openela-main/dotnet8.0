@@ -58,7 +58,7 @@
 
 Name:           dotnet%{dotnetver}
 Version:        %{sdk_rpm_version}
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        .NET Runtime and SDK
 License:        0BSD AND Apache-2.0 AND (Apache-2.0 WITH LLVM-exception) AND APSL-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-4-Clause AND BSL-1.0 AND bzip2-1.0.6 AND CC0-1.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC-PDDC AND CNRI-Python AND EPL-1.0 AND GPL-2.0-only AND (GPL-2.0-only WITH GCC-exception-2.0) AND GPL-2.0-or-later AND GPL-3.0-only AND ICU AND ISC AND LGPL-2.1-only AND LGPL-2.1-or-later AND LicenseRef-Fedora-Public-Domain AND LicenseRef-ISO-8879 AND MIT AND MIT-Wu AND MS-PL AND MS-RL AND NCSA AND OFL-1.1 AND OpenSSL AND Unicode-DFS-2015 AND Unicode-DFS-2016 AND W3C-19980720 AND X11 AND Zlib
 
@@ -99,6 +99,10 @@ Patch4:         msbuild-9449-exec-stop-setting-a-locale.patch
 # digests used for the signature are not treated as fatal errors.
 # https://issues.redhat.com/browse/RHEL-25254
 Patch5:         runtime-openssl-sha1.patch
+# Backport of https://github.com/dotnet/runtime/pull/110554
+# Fixes apphost hash duplication under compiler optimizations
+# https://github.com/dotnet/runtime/issues/109611
+Patch6:         runtime-apphost-compare-noopt.patch
 
 
 ExclusiveArch:  aarch64 ppc64le s390x x86_64
@@ -842,37 +846,37 @@ export COMPlus_LTTng=0
 
 
 %changelog
-* Mon Oct 26 2026 Omair Majid <omajid@redhat.com> - 8.0.133-1
+* Thu Oct 29 2026 Omair Majid <omajid@redhat.com> - 8.0.133-2
 - Update to .NET SDK 8.0.133 and Runtime 8.0.33
-- Resolves: RHEL-291718
+- Resolves: RHEL-291720
 
-* Thu Oct 08 2026 Tom Deseyn <tdeseyn@redhat.com> - 8.0.132-1
+* Wed Oct 14 2026 Tom Deseyn <tdeseyn@redhat.com> - 8.0.132-2
 - Update to .NET SDK 8.0.132 and Runtime 8.0.32
-- Resolves: RHEL-277794
+- Resolves: RHEL-277796
 
-* Wed Sep 02 2026 Dominik Rehák <drehak@redhat.com> - 8.0.131-1
+* Mon Sep 14 2026 Dominik Rehák <drehak@redhat.com> - 8.0.131-2
 - Update to .NET SDK 8.0.131 and Runtime 8.0.31
-- Resolves: RHEL-252248
+- Resolves: RHEL-252250
 
-* Sun Aug 09 2026 Omair Majid <omajid@redhat.com> - 8.0.130-1
+* Fri Aug 14 2026 Omair Majid <omajid@redhat.com> - 8.0.130-2
 - Update to .NET SDK 8.0.130 and Runtime 8.0.30
-- Resolves: RHEL-235472
+- Resolves: RHEL-235470
 
-* Wed Jul 08 2026 Satish Mane <satmane@redhat.com> - 8.0.129-1
+* Thu Jul 23 2026 Satish Mane <satmane@redhat.com> - 8.0.129-2
 - Update to .NET SDK 8.0.129 and Runtime 8.0.29
-- Resolves: RHEL-192468
+- Resolves: RHEL-192466
 
-* Thu Jul 02 2026 Tom Deseyn <tdeseyn@redhat.com> - 8.0.128-2
+* Thu Jul 02 2026 Tom Deseyn <tdeseyn@redhat.com> - 8.0.128-3
 - Reduce time to detect hanging builds
-- Resolves: RHEL-191650
+- Resolves: RHEL-191648
 
-* Wed Jun 03 2026 Tom Deseyn <tdeseyn@redhat.com> - 8.0.128-1
+* Wed Jun 10 2026 Tom Deseyn <tdeseyn@redhat.com> - 8.0.128-2
 - Update to .NET SDK 8.0.128 and Runtime 8.0.28
-- Resolves: RHEL-181056
+- Resolves: RHEL-181054
 
-* Wed May 06 2026 Omair Majid <omajid@redhat.com> - 8.0.127-1
+* Thu May 28 2026 Omair Majid <omajid@redhat.com> - 8.0.127-2
 - Update to .NET SDK 8.0.127 and Runtime 8.0.27
-- Resolves: RHEL-173924
+- Resolves: RHEL-173922
 
 * Fri Apr 17 2026 Omair Majid <omajid@redhat.com> - 8.0.126-2
 - Update to .NET SDK 8.0.126 and Runtime 8.0.26
